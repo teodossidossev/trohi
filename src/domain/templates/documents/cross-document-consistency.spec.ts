@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { agentsTemplate } from './agents';
 import { architectureTemplate } from './architecture';
+import { claudeTemplate } from './claude';
 import { codingStandardsTemplate } from './coding-standards';
 import { featureArchitectureTemplate } from './feature-architecture';
 import { renderDocument } from '../document-template';
@@ -24,6 +26,54 @@ describe('cross-document consistency', () => {
       codingStandards: renderDocument(codingStandardsTemplate, context).file.content.value,
     };
   };
+
+  describe('deferred agent targets (Cursor, Copilot)', () => {
+    // Per docs/AGENT_BOOTSTRAP_SCOPE.md and the trohi-bootstrap preset,
+    // Cursor and Copilot are deferred. AGENTS.md and CLAUDE.md must
+    // mention them only in deferred-context, never as positive
+    // recommendations.
+
+    const renderTwo = () => {
+      const context = RenderingContext.create({ config: TrohiBootstrapPreset.create() });
+      return {
+        agents: renderDocument(agentsTemplate, context).file.content.value,
+        claude: renderDocument(claudeTemplate, context).file.content.value,
+      };
+    };
+
+    it('AGENTS.md mentions Cursor and Copilot only inside the Deferred Agent Targets section', () => {
+      const { agents } = renderTwo();
+      const deferredHeadingIdx = agents.indexOf('## Deferred Agent Targets');
+      expect(deferredHeadingIdx).toBeGreaterThan(0);
+
+      for (const target of ['cursor', 'copilot']) {
+        const matches = [...agents.matchAll(new RegExp(target, 'g'))];
+        expect(matches).toHaveLength(1);
+        expect(matches[0].index).toBeGreaterThan(deferredHeadingIdx);
+      }
+    });
+
+    it('CLAUDE.md mentions Cursor and Copilot only inside the deferred-targets sentence', () => {
+      const { claude } = renderTwo();
+      const deferredIdx = claude.indexOf('Do not generate output for deferred');
+      expect(deferredIdx).toBeGreaterThan(0);
+
+      for (const target of ['cursor', 'copilot']) {
+        const matches = [...claude.matchAll(new RegExp(target, 'g'))];
+        expect(matches).toHaveLength(1);
+        expect(matches[0].index).toBeGreaterThan(deferredIdx);
+      }
+    });
+
+    it('neither AGENTS.md nor CLAUDE.md positively recommends a Cursor or Copilot file path', () => {
+      const { agents, claude } = renderTwo();
+      // Vendor-specific paths must not appear as recommendations.
+      for (const text of [agents, claude]) {
+        expect(text).not.toContain('.cursor/');
+        expect(text).not.toContain('.github/copilot-instructions.md');
+      }
+    });
+  });
 
   describe('the no-direct-HttpClient/REST rule', () => {
     // The rule is driven by featureArchitecture.allowDirectHttpClientFromViews.

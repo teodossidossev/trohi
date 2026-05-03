@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { finalizeDocument, joinBlocks, optionalSection, section } from './section-helpers';
+import {
+  finalizeDocument,
+  frontmatter,
+  joinBlocks,
+  optionalSection,
+  section,
+} from './section-helpers';
 
 describe('section', () => {
   it('renders a heading + body separated by a blank line', () => {
@@ -67,5 +73,41 @@ describe('finalizeDocument', () => {
   it('is idempotent', () => {
     const body = '# T\n\nbody\n';
     expect(finalizeDocument(finalizeDocument(body))).toBe(finalizeDocument(body));
+  });
+});
+
+describe('frontmatter', () => {
+  it('builds a YAML frontmatter block with single-quoted values', () => {
+    expect(frontmatter({ name: 'foo', description: 'a thing' })).toBe(
+      "---\nname: 'foo'\ndescription: 'a thing'\n---",
+    );
+  });
+
+  it('preserves field order from the input record', () => {
+    const result = frontmatter({ description: 'd', name: 'n' });
+    const idxDesc = result.indexOf('description:');
+    const idxName = result.indexOf('name:');
+    expect(idxDesc).toBeGreaterThan(0);
+    expect(idxName).toBeGreaterThan(idxDesc);
+  });
+
+  it("escapes single quotes in values per YAML single-quoted scalar rules ('  -> '')", () => {
+    expect(frontmatter({ description: "Claude's skill" })).toBe(
+      "---\ndescription: 'Claude''s skill'\n---",
+    );
+  });
+
+  it('does not interpret YAML-special characters in values', () => {
+    // ":", "#", "-" inside the string must not start a sub-document or
+    // be reinterpreted; quoting handles that for us.
+    const result = frontmatter({ description: 'has: a colon and # hash' });
+    expect(result).toBe("---\ndescription: 'has: a colon and # hash'\n---");
+  });
+
+  it('starts and ends with the --- delimiter only (no trailing newline)', () => {
+    const result = frontmatter({ name: 'x' });
+    expect(result.startsWith('---\n')).toBe(true);
+    expect(result.endsWith('\n---')).toBe(true);
+    expect(result.endsWith('\n---\n')).toBe(false);
   });
 });
