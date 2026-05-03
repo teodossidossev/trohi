@@ -293,6 +293,7 @@ Use these documents as source guidance:
 - `docs/DECISIONS.md`
 - `docs/TECH_STACK.md`
 - `docs/PROJECT_STRUCTURE.md`
+- `docs/IMPLEMENTATION_PLAN.md`
 
 When a task conflicts with these documents, stop and explain the conflict before implementing.
 
