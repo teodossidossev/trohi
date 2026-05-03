@@ -1,0 +1,20 @@
+# Build output
+dist/
+.angular/
+coverage/
+node_modules/
+
+# Hand-authored project documentation
+docs/
+README.md
+
+# Hand-authored agent instructions
+AGENTS.md
+CLAUDE.md
+.claude/
+.github/
+
+# Cypress generated assets
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/

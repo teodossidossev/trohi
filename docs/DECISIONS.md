@@ -933,6 +933,69 @@ The main branch remains under human control.
 
 ---
 
+## 032. The MVP uses a single-app Angular workspace, not a multi-project workspace
+
+**Status:** Accepted
+
+### Context
+
+`docs/ARCHITECTURE.md` and `docs/DECISIONS.md` decision 009 require the generation core to be independent from Angular UI. One way to enforce this is to put the core in a separate Angular library project (for example `projects/core/`).
+
+### Decision
+
+The MVP uses a single-app Angular 21 workspace at the repository root.
+
+Core independence is enforced through folder boundaries (`src/domain/`), import discipline, and review, not through a separate library project.
+
+### Alternatives Considered
+
+- Multi-project Angular workspace with `projects/app/` and `projects/core/`.
+- Nx or similar monorepo tooling.
+
+### Reason
+
+A single-app workspace keeps the MVP simple and shippable. Folder-level separation is enough to enforce the architecture rule while the MVP is browser-only and has no second consumer of the core.
+
+### Consequences
+
+If the core later needs to be reused by a CLI, backend, or other Angular app, the structure can be promoted to a multi-project workspace or extracted into a library without rewriting the core code.
+
+This decision is reflected in `docs/PROJECT_STRUCTURE.md`.
+
+### Review
+
+Revisit when a second consumer of the generation core becomes active work, or when boundary violations become recurrent.
+
+---
+
+## 033. ESLint via @angular-eslint plus Prettier are the MVP lint and format tools
+
+**Status:** Accepted
+
+### Context
+
+`docs/TECH_STACK.md` requires Google TypeScript Style (`gts`) **or** an Angular-compatible strict equivalent. `gts` is not Angular-aware and conflicts with Angular template linting needs.
+
+### Decision
+
+Use `@angular-eslint` (ESLint with Angular plugins) for linting and Prettier for formatting.
+
+### Alternatives Considered
+
+- `gts` directly.
+- ESLint without Angular plugins.
+- Biome.
+
+### Reason
+
+`@angular-eslint` is the Angular-supported strict linting setup, integrates with Angular templates, and is compatible with Angular CLI 21. Prettier handles formatting consistently and works alongside ESLint.
+
+### Consequences
+
+Lint and format checks run locally before commit and in GitHub CI. The configuration is added during the bootstrap commit and can be tightened over time without revisiting this decision.
+
+---
+
 ## Decision Review Process
 
 Decisions should be reviewed when:
