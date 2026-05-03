@@ -52,8 +52,8 @@ describe('architectureTemplate', () => {
           '- Use UI view models: yes\n\n' +
           '## Feature Architecture\n\n' +
           '- Views are presentational: yes\n' +
-          '- Has feature business layer: yes\n' +
-          '- Allow direct HttpClient from views: no\n',
+          '- Has feature business/application layer: yes\n' +
+          '- Allow direct HttpClient/REST from views: no\n',
       );
     });
 
@@ -80,8 +80,10 @@ describe('architectureTemplate', () => {
         expect(value).toContain('- React');
       });
 
-      it('reflects allowDirectHttpClientFromViews=false', () => {
-        expect(subject().file.content.value).toContain('Allow direct HttpClient from views: no');
+      it('reflects allowDirectHttpClientFromViews=false using the shared wording', () => {
+        expect(subject().file.content.value).toContain(
+          'Allow direct HttpClient/REST from views: no',
+        );
       });
     });
   });
