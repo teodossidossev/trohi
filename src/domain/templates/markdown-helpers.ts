@@ -94,14 +94,42 @@ export function horizontalRule(): string {
 }
 
 /**
- * Escape characters that have special meaning in Markdown when used
- * inline (paragraph or list-item context). Conservative: prefers a
- * possibly-redundant backslash over breaking layout.
+ * Escape characters that have special meaning to Markdown's *inline*
+ * grammar regardless of position in a line.
+ *
+ * Escapes: `\`, `` ` ``, `*`, `_`, `[`, `]`, `<`, `>`. Does NOT escape
+ * characters that are only special at the start of a line (`#`, `-`,
+ * `+`, `>`-as-blockquote): use {@link escapeBody} for multi-line user
+ * content where line-start markers also matter.
  *
  * Templates that emit known-safe text (e.g. enum values, validated
  * paths) should not call this; it is for user-provided strings.
  */
 export function escapeInline(text: string): string {
-  // Escape backslash first so subsequent escapes do not double-escape.
-  return text.replace(/[\\`*_{}[\]()<>#+\-!|~]/g, (char) => `\\${char}`);
+  // Backslash first via the same pass: the regex captures it, and the
+  // replace prepends a single backslash, doubling it correctly.
+  return text.replace(/[\\`*_[\]<>]/g, (char) => `\\${char}`);
+}
+
+/**
+ * Escape user-provided text intended for a multi-line body or a list
+ * item.
+ *
+ * Applies {@link escapeInline} for inline specials, then additionally
+ * escapes characters that would activate block-level constructs at the
+ * start of a line: `#` (heading), `-` and `+` (list), `>` (blockquote).
+ *
+ * Templates rendering user-supplied free text into section bodies or
+ * bullet items should call this rather than `escapeInline` directly.
+ */
+export function escapeBody(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const inline = escapeInline(line);
+      return inline.replace(/^(\s*)([#\-+>])/u, (_match, leading: string, marker: string) => {
+        return `${leading}\\${marker}`;
+      });
+    })
+    .join('\n');
 }

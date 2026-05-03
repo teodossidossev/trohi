@@ -3,6 +3,7 @@ import {
   bold,
   bulletList,
   codeBlock,
+  escapeBody,
   escapeInline,
   heading,
   horizontalRule,
@@ -110,19 +111,72 @@ describe('horizontalRule', () => {
 });
 
 describe('escapeInline', () => {
-  it('escapes Markdown special characters', () => {
+  it('escapes inline-special characters', () => {
     expect(escapeInline('a*b')).toBe('a\\*b');
     expect(escapeInline('a_b')).toBe('a\\_b');
-    expect(escapeInline('[x](y)')).toBe('\\[x\\]\\(y\\)');
     expect(escapeInline('a`b')).toBe('a\\`b');
+    expect(escapeInline('a<b>c')).toBe('a\\<b\\>c');
+  });
+
+  it('escapes brackets so link syntax cannot be reformed', () => {
+    // Escaping just the brackets is sufficient: `\[x\](y)` is rendered
+    // as the literal string `[x](y)`, never as a link.
+    expect(escapeInline('[x](y)')).toBe('\\[x\\](y)');
   });
 
   it('escapes backslashes', () => {
     expect(escapeInline('a\\b')).toBe('a\\\\b');
   });
 
+  it('does not escape line-only markers (handled by escapeBody)', () => {
+    // Mid-word dashes (e.g. "Dev-first") and inline `#hashtag` should
+    // not get backslashes - they are only special at line start.
+    expect(escapeInline('Dev-first')).toBe('Dev-first');
+    expect(escapeInline('a#b')).toBe('a#b');
+    expect(escapeInline('a+b')).toBe('a+b');
+    expect(escapeInline('a(b)c')).toBe('a(b)c');
+  });
+
   it('returns text without specials unchanged', () => {
     expect(escapeInline('hello world')).toBe('hello world');
+  });
+});
+
+describe('escapeBody', () => {
+  it('also escapes inline specials inside body text', () => {
+    expect(escapeBody('a*b')).toBe('a\\*b');
+    expect(escapeBody('[x](y)')).toBe('\\[x\\](y)');
+  });
+
+  it('escapes leading "#" so a line is not parsed as a heading', () => {
+    expect(escapeBody('# Heading')).toBe('\\# Heading');
+  });
+
+  it('escapes leading "-" and "+" so a line is not parsed as a list item', () => {
+    expect(escapeBody('- item')).toBe('\\- item');
+    expect(escapeBody('+ item')).toBe('\\+ item');
+  });
+
+  it('escapes leading ">" so a line is not parsed as a blockquote', () => {
+    expect(escapeBody('> quote')).toBe('\\> quote');
+  });
+
+  it('escapes leading markers per line in multi-line text', () => {
+    expect(escapeBody('para 1\n# heading\n- item')).toBe('para 1\n\\# heading\n\\- item');
+  });
+
+  it('preserves leading whitespace before escaping the marker', () => {
+    expect(escapeBody('  - indented')).toBe('  \\- indented');
+  });
+
+  it('does not over-escape mid-line markers', () => {
+    // The dash inside "Dev-first" must remain literal so generated
+    // docs stay readable.
+    expect(escapeBody('Dev-first tool')).toBe('Dev-first tool');
+  });
+
+  it('returns clean text unchanged', () => {
+    expect(escapeBody('hello world')).toBe('hello world');
   });
 });
 
