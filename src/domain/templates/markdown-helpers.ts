@@ -47,13 +47,20 @@ export function inlineCode(text: string): string {
  * Build a fenced code block.
  *
  * Uses triple-backtick fences with the optional language tag on the
- * opening fence. The body is emitted as-is (no escaping); a trailing
- * newline inside the body is preserved if present.
+ * opening fence. The body is emitted as-is (no escaping). Exactly one
+ * newline always separates the body from the closing fence: callers
+ * may pre-terminate their body with `\n` without producing a blank
+ * line, but additional trailing newlines (`\n\n`, ...) are kept and
+ * render as intentional blank lines inside the block.
  */
 export function codeBlock(input: { language?: string; code: string }): string {
   const fence = '```';
   const opener = input.language === undefined ? fence : `${fence}${input.language}`;
-  return `${opener}\n${input.code}\n${fence}`;
+  // Skip the auto-newline when the body already ends in one, so a
+  // pre-terminated body does not get an extra blank line in front of
+  // the closing fence.
+  const separator = input.code.endsWith('\n') ? '' : '\n';
+  return `${opener}\n${input.code}${separator}${fence}`;
 }
 
 /**

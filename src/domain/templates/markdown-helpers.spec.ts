@@ -56,6 +56,27 @@ describe('codeBlock', () => {
   it('preserves the body verbatim (no escaping)', () => {
     expect(codeBlock({ code: 'a\n  b' })).toBe('```\na\n  b\n```');
   });
+
+  it('does not insert a blank line when the body already ends with a single newline', () => {
+    // Regression: previously codeBlock unconditionally appended `\n`
+    // before the closing fence, producing `'```\nx\n\n```'` for input
+    // `'x\n'`. The closing fence must always be on its own line, but
+    // there must not be a blank line in front of it just because the
+    // user pre-terminated their body.
+    expect(codeBlock({ code: 'x\n' })).toBe('```\nx\n```');
+  });
+
+  it('preserves explicit trailing blank lines in the body', () => {
+    // A body ending in two newlines should render with a real blank
+    // line before the closing fence (the user wrote it intentionally).
+    expect(codeBlock({ code: 'x\n\n' })).toBe('```\nx\n\n```');
+  });
+
+  it('renders an empty body as opening fence, blank line, closing fence', () => {
+    // Consistent with the non-empty form: structure is always
+    // `${opener}\n${body}\n${closer}`, just with an empty body.
+    expect(codeBlock({ code: '' })).toBe('```\n\n```');
+  });
 });
 
 describe('bulletList', () => {
