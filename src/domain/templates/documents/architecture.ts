@@ -166,8 +166,10 @@ function renderFeatureArchitectureSection(
     title: 'Feature Architecture',
     body: bulletList([
       `Views are presentational: ${yesNo(fa.viewsArePresentational)}`,
-      `Has feature business layer: ${yesNo(fa.hasFeatureBusinessLayer)}`,
-      `Allow direct HttpClient from views: ${yesNo(fa.allowDirectHttpClientFromViews)}`,
+      // The feature-architecture/coding-standards templates also render
+      // this rule; the wording must stay identical across docs.
+      `Has feature business/application layer: ${yesNo(fa.hasFeatureBusinessLayer)}`,
+      `Allow direct HttpClient/REST from views: ${yesNo(fa.allowDirectHttpClientFromViews)}`,
     ]),
   });
 }
