@@ -51,6 +51,40 @@ describe('projectConfigDtoSchema', () => {
       expect(result.success).toBe(false);
     });
 
+    it('rejects whitespace-only project.name (boundary normalizes via trim)', () => {
+      const result = projectConfigDtoSchema.safeParse({
+        metadata: { configVersion: '1' },
+        project: { name: '   ' },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(['project', 'name']);
+      }
+    });
+
+    it('rejects whitespace-only metadata.configVersion (boundary normalizes via trim)', () => {
+      const result = projectConfigDtoSchema.safeParse({
+        metadata: { configVersion: '   ' },
+        project: { name: 'trohi' },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(['metadata', 'configVersion']);
+      }
+    });
+
+    it('parses with surrounding whitespace trimmed off valid strings', () => {
+      const result = projectConfigDtoSchema.safeParse({
+        metadata: { configVersion: '  1  ' },
+        project: { name: '  trohi  ' },
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.metadata.configVersion).toBe('1');
+        expect(result.data.project.name).toBe('trohi');
+      }
+    });
+
     it('rejects non-string project.name', () => {
       const result = projectConfigDtoSchema.safeParse({
         metadata: { configVersion: '1' },

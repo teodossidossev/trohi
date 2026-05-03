@@ -59,7 +59,8 @@ export class ProjectConfigMapper {
    *
    * Used at the file-import boundary so the UI can always handle one
    * unified failure shape instead of mixing thrown errors with parse
-   * errors.
+   * errors. Each invariant failure is attributed to the field it
+   * originates from rather than to a single catch-all path.
    */
   static parseAndMap(raw: unknown): MapResult<ProjectConfig> {
     const parsed = projectConfigDtoSchema.safeParse(raw);
@@ -70,16 +71,37 @@ export class ProjectConfigMapper {
       return { success: false, validation: ValidationResult.fromIssues(issues) };
     }
 
+    let validation = ValidationResult.empty();
+
+    let projectName: ProjectName | undefined;
     try {
-      return { success: true, value: ProjectConfigMapper.fromDto(parsed.data) };
+      projectName = ProjectName.create(parsed.data.project.name);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      // Invariant errors come from the project section in this skeleton;
-      // when more sections are mapped, attribute paths per field.
+      validation = validation.addError(ProjectConfigMapper.messageOf(error), ['project', 'name']);
+    }
+
+    if (projectName === undefined) {
+      return { success: false, validation };
+    }
+
+    try {
+      const config = ProjectConfig.create({
+        configVersion: parsed.data.metadata.configVersion,
+        projectName,
+      });
+      return { success: true, value: config };
+    } catch (error) {
       return {
         success: false,
-        validation: ValidationResult.empty().addError(message, ['project', 'name']),
+        validation: validation.addError(ProjectConfigMapper.messageOf(error), [
+          'metadata',
+          'configVersion',
+        ]),
       };
     }
+  }
+
+  private static messageOf(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 }

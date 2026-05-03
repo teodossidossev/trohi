@@ -100,5 +100,63 @@ describe('ProjectConfigMapper', () => {
         expect(result.validation.errors.length).toBeGreaterThanOrEqual(2);
       }
     });
+
+    it('attributes a whitespace-only configVersion to metadata.configVersion (not to project.name)', () => {
+      const result = ProjectConfigMapper.parseAndMap({
+        metadata: { configVersion: '   ' },
+        project: { name: 'trohi' },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.validation.errors).toHaveLength(1);
+        expect(result.validation.errors[0].path).toEqual(['metadata', 'configVersion']);
+      }
+    });
+
+    it('aggregates whitespace-only failures across both metadata.configVersion and project.name', () => {
+      const result = ProjectConfigMapper.parseAndMap({
+        metadata: { configVersion: '   ' },
+        project: { name: '   ' },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const paths = result.validation.errors.map((e) => e.path);
+        expect(paths).toEqual(
+          expect.arrayContaining([
+            ['metadata', 'configVersion'],
+            ['project', 'name'],
+          ]),
+        );
+      }
+    });
+
+    it('attributes a too-long project.name invariant failure to project.name only', () => {
+      const tooLong = 'x'.repeat(ProjectName.MAX_LENGTH + 1);
+      const result = ProjectConfigMapper.parseAndMap({
+        metadata: { configVersion: '1' },
+        project: { name: tooLong },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        // Critical: must not be attributed to metadata.configVersion.
+        expect(result.validation.errors).toHaveLength(1);
+        expect(result.validation.errors[0].path).toEqual(['project', 'name']);
+      }
+    });
+
+    it('does not run domain construction when Zod already failed', () => {
+      // configVersion fails Zod; project.name passes Zod but would fail
+      // the ProjectName invariant if construction ran. Result must
+      // surface only the Zod error and not silently mask anything.
+      const tooLong = 'x'.repeat(ProjectName.MAX_LENGTH + 1);
+      const result = ProjectConfigMapper.parseAndMap({
+        metadata: { configVersion: '   ' },
+        project: { name: tooLong },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.validation.errors[0].path).toEqual(['metadata', 'configVersion']);
+      }
+    });
   });
 });

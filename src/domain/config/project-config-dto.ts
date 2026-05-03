@@ -15,12 +15,17 @@ export const projectConfigDtoSchema = z
   .object({
     metadata: z
       .object({
-        configVersion: z.string().min(1, 'metadata.configVersion must be a non-empty string'),
+        // Trim before length check so the boundary rejects whitespace-only
+        // values consistently and downstream code never sees padded strings.
+        configVersion: z
+          .string()
+          .trim()
+          .min(1, 'metadata.configVersion must be a non-empty string'),
       })
       .strict(),
     project: z
       .object({
-        name: z.string().min(1, 'project.name must be a non-empty string'),
+        name: z.string().trim().min(1, 'project.name must be a non-empty string'),
       })
       .strict(),
   })
