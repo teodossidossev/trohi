@@ -1,6 +1,7 @@
 import { projectConfigDtoSchema, type ProjectConfigDto } from './project-config-dto';
 import { ProjectConfig } from './project-config';
 import { ProjectName } from '../values/project-name';
+import { ProjectSection } from './sections/project-section';
 import { ValidationResult } from '../validation/validation-result';
 import { ValidationIssue } from '../validation/validation-issue';
 
@@ -37,18 +38,21 @@ export class ProjectConfigMapper {
   static fromDto(dto: ProjectConfigDto): ProjectConfig {
     return ProjectConfig.create({
       configVersion: dto.metadata.configVersion,
-      projectName: ProjectName.create(dto.project.name),
+      project: ProjectSection.create({ name: ProjectName.create(dto.project.name) }),
     });
   }
 
   /**
    * Map a {@link ProjectConfig} back to the serializable DTO shape.
    * The result is safe to JSON.stringify and write as `trohi.config.json`.
+   *
+   * Optional sections beyond `project` are not yet serialized into the
+   * DTO; they will be added in the import/export phase.
    */
   static toDto(model: ProjectConfig): ProjectConfigDto {
     return {
       metadata: { configVersion: model.configVersion },
-      project: { name: model.projectName.value },
+      project: { name: model.project.name.value },
     };
   }
 
@@ -73,21 +77,22 @@ export class ProjectConfigMapper {
 
     let validation = ValidationResult.empty();
 
-    let projectName: ProjectName | undefined;
+    let projectSection: ProjectSection | undefined;
     try {
-      projectName = ProjectName.create(parsed.data.project.name);
+      const name = ProjectName.create(parsed.data.project.name);
+      projectSection = ProjectSection.create({ name });
     } catch (error) {
       validation = validation.addError(ProjectConfigMapper.messageOf(error), ['project', 'name']);
     }
 
-    if (projectName === undefined) {
+    if (projectSection === undefined) {
       return { success: false, validation };
     }
 
     try {
       const config = ProjectConfig.create({
         configVersion: parsed.data.metadata.configVersion,
-        projectName,
+        project: projectSection,
       });
       return { success: true, value: config };
     } catch (error) {
