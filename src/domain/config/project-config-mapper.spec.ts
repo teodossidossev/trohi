@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ProjectConfigMapper } from './project-config-mapper';
 import { ProjectConfig } from './project-config';
 import { ProjectName } from '../values/project-name';
+import { ProjectSection } from './sections/project-section';
 
 describe('ProjectConfigMapper', () => {
   describe('fromDto', () => {
@@ -11,7 +12,7 @@ describe('ProjectConfigMapper', () => {
         project: { name: 'trohi' },
       });
       expect(config.configVersion).toBe('1');
-      expect(config.projectName.value).toBe('trohi');
+      expect(config.project.name.value).toBe('trohi');
     });
 
     it('trims project.name through the value object', () => {
@@ -19,7 +20,7 @@ describe('ProjectConfigMapper', () => {
         metadata: { configVersion: '1' },
         project: { name: '  spaced  ' },
       });
-      expect(config.projectName.value).toBe('spaced');
+      expect(config.project.name.value).toBe('spaced');
     });
   });
 
@@ -36,7 +37,7 @@ describe('ProjectConfigMapper', () => {
     it('emits the trimmed/normalized name from the domain model', () => {
       const config = ProjectConfig.create({
         configVersion: '1',
-        projectName: ProjectName.create('  trohi  '),
+        project: ProjectSection.create({ name: ProjectName.create('  trohi  ') }),
       });
       expect(ProjectConfigMapper.toDto(config)).toEqual({
         metadata: { configVersion: '1' },
@@ -53,7 +54,10 @@ describe('ProjectConfigMapper', () => {
       });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value.projectName.value).toBe('trohi');
+        expect(result.value.project.name.value).toBe('trohi');
+        // The skeleton mapper does not yet construct optional sections.
+        expect(result.value.product).toBeUndefined();
+        expect(result.value.architecture).toBeUndefined();
       }
     });
 
