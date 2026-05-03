@@ -89,9 +89,9 @@ AGENTS.md
 docs/AGENT_BOOTSTRAP_SCOPE.md
 ```
 
-Cursor and GitHub Copilot files are deferred for this repository bootstrap.
+Cursor and GitHub Copilot files are deferred for **this repository's own bootstrap**, per `docs/AGENT_BOOTSTRAP_SCOPE.md`.
 
-They remain future product output targets.
+They remain in scope as **trohi product output targets** that the MVP can generate for users (see `docs/MVP_SCOPE.md` § AI Agent Instruction Generation).
 
 ## Architecture Direction
 
@@ -192,6 +192,7 @@ docs/ROADMAP.md
 docs/DECISIONS.md
 docs/TECH_STACK.md
 docs/PROJECT_STRUCTURE.md
+docs/IMPLEMENTATION_PLAN.md
 ```
 
 ## Next Steps
