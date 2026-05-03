@@ -101,6 +101,8 @@ The exact list may be adjusted during implementation, but the MVP must include e
 
 ### AI Agent Instruction Generation
 
+This section describes files the trohi product generates **for its users' projects**. It does not describe agent files used to develop trohi itself — those are scoped in `docs/AGENT_BOOTSTRAP_SCOPE.md`.
+
 The MVP can generate initial AI agent instruction files such as:
 
 - `AGENTS.md`
