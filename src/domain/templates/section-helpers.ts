@@ -85,3 +85,21 @@ export function joinBlocks(...blocks: readonly string[]): string {
 export function finalizeDocument(body: string): string {
   return `${body.replace(/\s+$/u, '')}\n`;
 }
+
+/**
+ * Build a YAML frontmatter block for a Markdown document.
+ *
+ * All values are emitted as single-quoted YAML strings, with
+ * embedded single quotes doubled (`'` -> `''`) per YAML 1.2 single-
+ * quoted scalar rules. This avoids accidental YAML parsing of values
+ * that look like `:`, `#`, `-`, or boolean literals.
+ *
+ * Field order is preserved from the input record. Used by skill
+ * templates that need a Claude-readable header.
+ */
+export function frontmatter(fields: Readonly<Record<string, string>>): string {
+  const lines = Object.entries(fields).map(
+    ([key, value]) => `${key}: '${value.replace(/'/gu, "''")}'`,
+  );
+  return `---\n${lines.join('\n')}\n---`;
+}
